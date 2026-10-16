@@ -1,6 +1,11 @@
 # Antigravity 2.23.1+ 완전 자동 한글 패치 & 상단 바 실시간 Quota 위젯 v4.2
 
+[![Release](https://img.shields.io/github/v/release/Ming-Nine/Antigravity-Korean-Patch?color=blue&label=Latest%20Release)](https://github.com/Ming-Nine/Antigravity-Korean-Patch/releases/latest)
+[![Download ZIP](https://img.shields.io/badge/Download-ZIP%20Package-success?style=flat&logo=github)](https://github.com/Ming-Nine/Antigravity-Korean-Patch/releases/latest/download/Antigravity_Korean_Patch_v4.2.zip)
+
 Antigravity의 내부 UI 및 Electron 번들을 분석하여, **수동 단어장 없이 버전 업데이트에도 100% 자동으로 대응하는 지능형 한글화 엔진**과 **상단 메뉴바 실시간 모델 한도(Gemini, Claude, GPT) 위젯**을 원클릭으로 주입해주는 배포용 패키지입니다.
+
+> 📥 **[최신 원클릭 배포판 다운로드 (Antigravity_Korean_Patch_v4.2.zip)](https://github.com/Ming-Nine/Antigravity-Korean-Patch/releases/latest/download/Antigravity_Korean_Patch_v4.2.zip)**
 
 ---
 
@@ -65,9 +70,10 @@ Antigravity_Korean_Patch/
 
 ## 🛠️ 사용 방법
 
-1. Antigravity 프로그램을 정상 종료합니다.
-2. `Antigravity_KO_Patcher.bat`을 더블 클릭하여 실행합니다.
-3. 자동으로 5대 무결성 검증, 원본 백업, 한글화 및 위젯 주입이 완료됩니다.
-4. Antigravity를 실행하면 부팅 후 한글 UI와 우측 상단 쿼터 위젯이 실시간으로 동기화됩니다!
+1. [최신 릴리즈](https://github.com/Ming-Nine/Antigravity-Korean-Patch/releases/latest)에서 **`Antigravity_Korean_Patch_v4.2.zip`**을 다운로드하고 압축을 풉니다.
+2. 실행 중인 Antigravity 프로그램을 정상 종료합니다.
+3. **`Antigravity_KO_Patcher.bat`**을 더블 클릭하여 실행합니다.
+4. 자동으로 5대 무결성 검증, 원본 백업, 한글화 및 위젯 주입이 완료됩니다.
+5. Antigravity를 실행하면 부팅 후 한글 UI와 우측 상단 쿼터 위젯이 실시간으로 동기화됩니다!
 
 *순정 상태로 복원이 필요할 때는 언제든지 `Rollback_Original.bat`을 실행하세요.*
