@@ -2,6 +2,10 @@
 
 [![Release](https://img.shields.io/github/v/release/Ming-Nine/Antigravity-Korean-Patch?color=blue&label=Latest%20Release)](https://github.com/Ming-Nine/Antigravity-Korean-Patch/releases/latest)
 [![Download ZIP](https://img.shields.io/badge/Download-ZIP%20Package-success?style=flat&logo=github)](https://github.com/Ming-Nine/Antigravity-Korean-Patch/releases/latest/download/Antigravity_Korean_Patch_v4.2.zip)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6?logo=windows)](https://github.com/Ming-Nine/Antigravity-Korean-Patch)
+[![Antigravity](https://img.shields.io/badge/Antigravity-2.23.1%2B%20Compatible-4285F4?logo=google)](https://github.com/Ming-Nine/Antigravity-Korean-Patch)
+[![Gemini Quota](https://img.shields.io/badge/Gemini%20Quota-Realtime%20Widget-8E75B2)](https://github.com/Ming-Nine/Antigravity-Korean-Patch)
+[![Claude Quota](https://img.shields.io/badge/Claude%2FGPT%20Quota-Realtime%20Widget-D97706)](https://github.com/Ming-Nine/Antigravity-Korean-Patch)
 
 Antigravity의 내부 UI 및 Electron 번들을 분석하여, **수동 단어장 없이 버전 업데이트에도 100% 자동으로 대응하는 지능형 한글화 엔진**과 **상단 메뉴바 실시간 모델 한도(Gemini, Claude, GPT) 위젯**을 원클릭으로 주입해주는 배포용 패키지입니다.
 
@@ -77,3 +81,19 @@ Antigravity_Korean_Patch/
 5. Antigravity를 실행하면 부팅 후 한글 UI와 우측 상단 쿼터 위젯이 실시간으로 동기화됩니다!
 
 *순정 상태로 복원이 필요할 때는 언제든지 `Rollback_Original.bat`을 실행하세요.*
+
+---
+
+## 🔍 태그 및 검색 키워드 (Search Tags & Keywords)
+
+본 프로젝트는 GitHub 및 검색 엔진에서 Antigravity 한글화와 쿼터 모니터링 관련 키워드로 검색이 용이하도록 색인 최적화(SEO)되어 있습니다.
+
+### 🇰🇷 주요 한국어 검색어
+- **한글 패치 및 번역**: 안티그래비티 한글 패치, 안티그래비티 한국어 패치, 안티그래비티 한글화, 안티그래비티 2.23.1, 안티그래비티 최신버전 한글, 안티그래비티 한국어 번역, 구글 안티그래비티 한글, Antigravity 한글 패치, Antigravity 한국어, Antigravity 한글화, Antigravity Hangul
+- **모델 쿼터 및 실시간 위젯**: 안티그래비티 쿼터 위젯, 안티그래비티 사용량 위젯, 안티그래비티 모델 한도, 안티그래비티 실시간 쿼터, 제미나이 쿼터 확인, 클로드 사용량 확인, GPT 잔여 한도 위젯, 안티그래비티 상단 바 위젯, 안티그래비티 Quota Bar, Gemini Quota, Claude Quota
+- **도구 및 실행기**: 안티그래비티 원클릭 패치, 안티그래비티 패처, asar 패치, Electron 한글 패치, Antigravity Patcher, Windows 원클릭 패치
+
+### 🌐 English Keywords
+- **Localization & Language**: Antigravity Korean Patch, Antigravity Korean Language, Antigravity Hangul Patch, Antigravity Localization, Google Antigravity Korean, Antigravity IDE Translation, Antigravity Korean Translation Pack, Auto Translation Pipeline
+- **Quota & Monitoring**: Antigravity Quota Widget, Antigravity Model Usage Bar, Antigravity Gemini Quota, Antigravity Claude Quota, Antigravity Real-time Quota Monitor, Silent Background Quota Probe, Live Quota Pill Badge
+- **Platform & Architecture**: Electron asar patch, Safe Tail Injection, React Portal Translation, MutationObserver Auto Translate, Google Translate Chrome API, Zero innerHTML, TrustedTypes Compatible
