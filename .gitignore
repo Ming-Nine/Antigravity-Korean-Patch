@@ -1,0 +1,6 @@
+# Antigravity Korean Patch - Git Ignore
+test_sandbox/
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
