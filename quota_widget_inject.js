@@ -1,19 +1,17 @@
 /**
- * Antigravity 2.23.1+ 완전 자동 한글화 엔진 & 실시간 Quota 위젯 v4.0
+ * Antigravity 2.23.1+ 완전 자동 한글화 엔진 & 실시간 Quota 위젯 v5.0
  * 
- * [핵심 기능]
- * 1. [과제 1] 인라인 태그({0}, {1}) 플레이스홀더 직렬화 및 원본 DOM 무손실 재조립
- * 2. [과제 2] 런타임 실시간 무인증 자동 번역 (clients5.google.com) + 영구 캐시 (localStorage)
- * 3. [과제 3] 쿼터 데이터 State Persistence (설정 닫혀도 100% 리셋 차단, 실제값 영구 유지)
- * 4. 안전 네트워크 가로채기 (fetch / XHR 패스스루 래퍼)
- * 5. TrustedTypes/CSP 100% 준수 (위험한 HTML 직접 대입 0건 사용)
- * 6. 상단 바 우측 창 조절 버튼(- □ ×) 간섭 완전 방지 레이아웃
+ * [v5.0 업데이트 핵심 내역]
+ * 1. 깜빡임 현상 완전 해결: 주기적 백그라운드 모달 자동 트리거 제거 (수동 ↻ 클릭 및 비침습 갱신)
+ * 2. 프롬프트 치는 곳(에디터/Lexical/Input) & 채팅 대화 구역 자동 번역 100% 제외
+ * 3. 설정 창 내 파일 경로, 와일드카드 규칙(*, * / *), MCP 도구 고유명사(github 등) 번역 제외
+ * 4. 원클릭 실행 파일(.exe) 배포 지원
  */
 ;(function() {
   'use strict';
   try {
-    if (window.__AGY_KO_PATCH_V4_LOADED__) return;
-    window.__AGY_KO_PATCH_V4_LOADED__ = true;
+    if (window.__AGY_KO_PATCH_V5_LOADED__) return;
+    window.__AGY_KO_PATCH_V5_LOADED__ = true;
 
     // ══════════════════════════════════════════════════════════════════
     // [1] 영구 로컬 캐시 및 번역 제외 스마트 필터
@@ -139,7 +137,13 @@
   "Claude": "Claude",
   "GPT": "GPT",
   "Claude and GPT Models": "Claude 및 GPT 모델",
-  "Claude & GPT Models": "Claude 및 GPT 모델"
+  "Claude & GPT Models": "Claude 및 GPT 모델",
+  "github": "github",
+  "GitHub": "GitHub",
+  "git": "git",
+  "mcp": "mcp",
+  "MCP": "MCP",
+  "MCP Tools": "MCP 도구"
 };
 
     const REGEX_RULES = [
@@ -152,13 +156,20 @@
       { pattern: /refreshes? in (\d+) minutes?/i, replacement: "$1분 후 초기화" }
     ];
 
-    const CACHE_KEY = 'agy_ko_auto_cache_v4';
+    const CACHE_KEY = 'agy_ko_auto_cache_v5';
     let memoryCache = Object.assign({}, BASE_DICTIONARY);
 
     try {
       const raw = localStorage.getItem(CACHE_KEY);
       if (raw) Object.assign(memoryCache, JSON.parse(raw));
     } catch (e) {}
+
+    // 잘못 번역된 과거 캐시 정리 (github -> 깃허브 등 오역 방지)
+    delete memoryCache["github"];
+    delete memoryCache["Github"];
+    delete memoryCache["GitHub"];
+    delete memoryCache["*"];
+    delete memoryCache["*/*"];
 
     function saveCache() {
       try {
@@ -168,7 +179,7 @@
 
     // 번역 제외 태그 및 클래스
     const EXCLUDE_TAGS = new Set([
-      'SCRIPT', 'STYLE', 'PRE', 'TEXTAREA', 'INPUT', 'SVG', 'MATH'
+      'SCRIPT', 'STYLE', 'PRE', 'TEXTAREA', 'INPUT', 'SVG', 'MATH', 'CODE', 'KBD', 'SAMP', 'VAR'
     ]);
 
     // 보호해야 할 인라인 태그 목록 (혼합 문장 처리 시 플레이스홀더 대상)
@@ -184,25 +195,117 @@
       /^[A-Za-z]$/                                                    // 1글자 영문
     ];
 
+    // 프롬프트 입력 영역, 채팅 메시지 구역, 코드/터미널 영역 제외 셀렉터
+    const EXCLUDE_CONTAINER_SELECTOR = [
+      // 1. 프롬프트 치는 곳 (사용자가 입력하는 중인 에디터 및 입력창 전체)
+      '[data-testid="agent-input-box"]',
+      '[data-testid*="input-box"]',
+      '[data-testid*="prompt"]',
+      '[data-testid*="composer"]',
+      '[data-lexical-editor="true"]',
+      '[contenteditable="true"]',
+      '[contenteditable=""]',
+      '[contenteditable]',
+      '[role="textbox"]',
+      '[role="searchbox"]',
+      '.ProseMirror',
+      '.cm-editor',
+      '.cm-content',
+      '.monaco-editor',
+      '.xterm',
+      '.code-block',
+      'form',
+
+      // 2. 채팅이 나오는 구역 (AI 응답, 사용자 질문, 도구 실행 로그/결과 등)
+      '[data-testid="turn-cards-container"]',
+      '[data-testid="user-input-step"]',
+      '[data-testid*="-step"]',
+      '[data-testid*="message-content"]',
+      '[data-testid*="agent-turn"]',
+      '[data-testid*="user-turn"]',
+      '[data-testid*="chat-stream"]',
+      '[data-testid*="chat-message"]',
+      '[data-testid*="tool-call"]',
+      '[data-testid*="tool-result"]',
+      '[data-testid="autoscroll-viewport"]',
+      '[role="log"]',
+      '[role="feed"]'
+    ].join(', ');
+
+    function isElementExcluded(el) {
+      if (!el) return false;
+      const target = (el.nodeType === 3) ? el.parentElement : el;
+      if (!target) return false;
+
+      // 1. 태그명 자체 검사
+      if (EXCLUDE_TAGS.has(target.tagName)) return true;
+
+      // 2. 편집 가능 요소 (사용자 입력 중 번역 원천 차단)
+      if (target.isContentEditable) return true;
+      if (target.getAttribute && (target.getAttribute('contenteditable') === 'true' || target.getAttribute('contenteditable') === '')) return true;
+      if (target.getAttribute && target.getAttribute('data-lexical-editor') === 'true') return true;
+
+      // 3. 상위 제외 컨테이너 검사 (프롬프트, 채팅창, 에디터 등)
+      if (target.closest) {
+        if (target.closest(EXCLUDE_CONTAINER_SELECTOR)) return true;
+
+        // 4. 설정 화면 내의 규칙/경로/도구 목록 행 보호 (수정/삭제 액션 버튼이 딸린 행의 데이터 값)
+        const row = target.closest('li, tr, .flex-row, .grid, [class*="row"]');
+        if (row && row.querySelector('button[aria-label*="Edit"], button[aria-label*="Delete"], button[aria-label*="수정"], button[aria-label*="삭제"], svg.lucide-pencil, svg.lucide-trash, svg.lucide-x, [data-testid*="delete"], [data-testid*="remove"]')) {
+          if (!target.matches('button, select, [role="button"], [role="combobox"]')) {
+            const p = target.parentElement;
+            if (p && !p.matches('button, select, [role="button"], [role="combobox"]')) {
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    }
+
+    // 보호해야 할 도구, 프레임워크, 서비스 고유명사 (절대 번역 금지)
+    const PROTECTED_IDENTIFIERS = new Set([
+      'antigravity', 'gemini', 'claude', 'gpt',
+      'github', 'gitlab', 'bitbucket', 'git',
+      'npm', 'npx', 'node', 'nodejs', 'yarn', 'pnpm', 'bun',
+      'python', 'pip', 'docker', 'dockerfile',
+      'cargo', 'rust', 'go', 'golang', 'wsl', 'bash', 'zsh', 'sh', 'powershell', 'cmd',
+      'vscode', 'cursor', 'chrome', 'chromium', 'brave', 'edge',
+      'mcp', 'notion', 'sqlite', 'postgres', 'mysql', 'redis', 'mongodb',
+      'react', 'vue', 'angular', 'svelte', 'nextjs', 'tailwind'
+    ]);
+
     function shouldTranslate(text) {
       if (!text || typeof text !== 'string') return false;
       const trimmed = text.trim();
       if (trimmed.length < 2) return false;
 
-      // 1. 고유명사 "Antigravity" 단독 또는 대소문자 보호
-      if (/^(?:antigravity|gemini|claude|gpt)$/i.test(trimmed)) return false;
+      // 1. 보호된 고유명사 / CLI 도구 / 서비스명 보호 (github -> 깃허브 오역 원천 방지)
+      if (PROTECTED_IDENTIFIERS.has(trimmed.toLowerCase())) return false;
 
-      // 2. 공백 없이 _ 또는 -로 연결된 식별자/파일명/폴더명 보호 (예: Antigravity_Korean_Patch, test_run)
+      // 2. 파일 경로, 디렉토리, URL, 와일드카드 패턴 (*, */*, C:\, /usr/ 등) 보호
+      if (/[*\/\\~]/.test(trimmed)) return false;
+      if (/^[A-Za-z]:/i.test(trimmed)) return false; // C: D: 드라이브 경로
+      if (/^\.[\w.-]+/.test(trimmed)) return false; // .git, .env 등
+
+      // 3. 파일 확장자 보호 (.exe, .js, .json, .py, .ts, .md, .bat 등)
+      if (/\.(?:exe|json|js|ts|py|go|rs|md|txt|yaml|yml|toml|lock|bat|cmd|sh|ps1|html|css)$/i.test(trimmed)) return false;
+
+      // 4. 식별자 보호 (공백 없이 _ 또는 - 로 연결된 식별자/변수명/함수명)
       if (!/\s/.test(trimmed) && /[-_]/.test(trimmed)) return false;
 
-      // 3. 한글이 이미 40% 이상이면 번역 불필요
+      // 5. 카멜케이스(camelCase) 식별자 보호 (예: createOrUpdateFile, apiKey)
+      if (!/\s/.test(trimmed) && /^[a-z]+[A-Z]/.test(trimmed)) return false;
+
+      // 6. 한글이 이미 40% 이상이면 번역 불필요
       const koMatches = trimmed.match(/[\uAC00-\uD7AF\u1100-\u11FF]/g);
       if (koMatches && koMatches.length >= trimmed.length * 0.4) return false;
 
-      // 4. 영문 알파벳이 전혀 없으면 스킵
+      // 7. 영문 알파벳이 전혀 없으면 스킵
       if (!/[A-Za-z]/.test(trimmed)) return false;
 
-      // 5. 정규식 필터 (이메일, 실제 경로, 기호 등)
+      // 8. 정규식 필터 (이메일, 기호 등)
       for (let i = 0; i < EXCLUDE_REGEX.length; i++) {
         if (EXCLUDE_REGEX[i].test(trimmed)) return false;
       }
@@ -528,6 +631,7 @@
       try {
         // 단일 텍스트 노드
         if (node.nodeType === 3) {
+          if (isElementExcluded(node)) return;
           if (!node._agy_translated) {
             const val = node.nodeValue;
             if (val && shouldTranslate(val)) {
@@ -539,9 +643,8 @@
 
         if (node.nodeType !== 1) return;
 
-        // 제외 대상 태그 또는 코드 에디터 클래스 검사
-        if (EXCLUDE_TAGS.has(node.tagName)) return;
-        if (node.closest && node.closest('script, style, pre, textarea, input, svg, math, .monaco-editor, .xterm, .code-block')) return;
+        // 제외 대상 태그 또는 상위 컨테이너(프롬프트, 채팅, 에디터 등) 검사
+        if (isElementExcluded(node)) return;
 
         // 1. 속성 검사 (placeholder, title, aria-label)
         const checkAttr = (el, attr) => {
@@ -557,7 +660,10 @@
         if (node.querySelectorAll) {
           const elsWithAttrs = node.querySelectorAll('[placeholder], [title], [aria-label]');
           for (let i = 0; i < elsWithAttrs.length; i++) {
-            ['placeholder', 'title', 'aria-label'].forEach(a => checkAttr(elsWithAttrs[i], a));
+            const elAttr = elsWithAttrs[i];
+            if (!isElementExcluded(elAttr)) {
+              ['placeholder', 'title', 'aria-label'].forEach(a => checkAttr(elAttr, a));
+            }
           }
         }
 
@@ -578,14 +684,16 @@
           const candidates = node.querySelectorAll('p, div, li, td, th, label, h1, h2, h3, h4, h5, h6');
           for (let i = 0; i < candidates.length; i++) {
             const cand = candidates[i];
-            const mixed = serializeMixedContainer(cand);
-            if (mixed) {
-              queueTranslation({
-                type: 'mixed',
-                node: cand,
-                text: mixed.text,
-                elements: mixed.elements
-              });
+            if (!isElementExcluded(cand)) {
+              const mixed = serializeMixedContainer(cand);
+              if (mixed) {
+                queueTranslation({
+                  type: 'mixed',
+                  node: cand,
+                  text: mixed.text,
+                  elements: mixed.elements
+                });
+              }
             }
           }
         }
@@ -594,10 +702,7 @@
         const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, {
           acceptNode: function(tNode) {
             const p = tNode.parentElement;
-            if (!p) return NodeFilter.FILTER_REJECT;
-            if (p.closest && p.closest('script, style, pre, textarea, input, svg, math, .monaco-editor, .xterm, .code-block, code, kbd')) {
-              return NodeFilter.FILTER_REJECT;
-            }
+            if (!p || isElementExcluded(p)) return NodeFilter.FILTER_REJECT;
             if (tNode._agy_translated) return NodeFilter.FILTER_SKIP;
             if (p.closest && p.closest('[_agy_mixed="1"]')) return NodeFilter.FILTER_SKIP;
 
@@ -1161,12 +1266,7 @@
     // ══════════════════════════════════════════════════════════════════
     let wasGenerating = false;
     function checkStreamingEnd() {
-      const stopBtn = document.querySelector('[data-testid="stop-button"], button[aria-label*="Stop"], button[aria-label*="중지"]');
-      const isGenerating = !!stopBtn;
-      if (wasGenerating && !isGenerating) {
-        setTimeout(refreshQuotaSilently, 1000);
-      }
-      wasGenerating = isGenerating;
+      // 깜빡임 방지: 자동 백그라운드 모달 트리거를 완전히 제거하여 타이핑 및 화면 간섭 0% 보장
     }
 
     let rafId = null;
@@ -1193,7 +1293,8 @@
           injectWidget();
         }
 
-        const modal = document.querySelector('[role="dialog"], [aria-modal="true"], .fixed.inset-0'); if (modal) scrapeQuotaFromModal(modal); checkStreamingEnd();
+        const modal = document.querySelector('[role="dialog"], [aria-modal="true"], .fixed.inset-0');
+        if (modal) scrapeQuotaFromModal(modal);
       } catch (e) {
       } finally {
         isPatching = false;
@@ -1223,7 +1324,7 @@
             attributeFilter: ['placeholder', 'title', 'aria-label']
           });
 
-          // 4. 주기적 상태 갱신 (10초마다)
+          // 4. 주기적 상태 갱신 (10초마다 - 모달이 이미 열려 있을 때만 비침습 스캔)
           setInterval(() => {
             try {
               if (!document.getElementById(WIDGET_ID)) injectWidget();
@@ -1232,7 +1333,7 @@
             } catch (e) {}
           }, 10000);
 
-          // 5. 모달 및 동적 UI 전용 500ms 고속 감시 하트비트 (설정 창 오픈 즉시 한글화 보장)
+          // 5. 모달 및 동적 UI 전용 500ms 감시 (설정 창 오픈 즉시 한글화 및 쿼터 동기화)
           setInterval(() => {
             try {
               const modal = document.querySelector('[role="dialog"], [aria-modal="true"], .fixed.inset-0');
@@ -1243,13 +1344,8 @@
             } catch (e) {}
           }, 500);
 
-          // 6. 부팅 완료 약 2초 후 1회 백그라운드 무음 갱신 자동 실행
-          setTimeout(() => {
-            refreshQuotaSilently();
-          }, 2000);
-
-          // 7. 3분(180초) 주기 백그라운드 정기 무음 갱신
-          setInterval(refreshQuotaSilently, 180000);
+          // [완전 제거] 깜빡임과 포커스 상실을 유발하던 백그라운드 모달 자동 열기(refreshQuotaSilently) 제거!
+          // 쿼터는 사용자가 ↻ 버튼을 누르거나, 설정창을 직접 열 때, 또는 네트워크 API 통신 시 100% 안전하게 갱신됩니다.
 
         } catch (bootErr) {
           console.error('[AGY-KO-PATCH] Boot error:', bootErr);
